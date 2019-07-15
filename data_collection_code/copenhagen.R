@@ -30,13 +30,13 @@ while (x <= 320) { #320 = magic number
     print(paste0("Working on page ", x + 1, "/", 321))
     
      y <- 1
-    
+    #Creating the url to get links for each of the meetings
     url <- paste0(start_url, x) 
     url <- read_html(url)
 
-    #Getting the dates and links for the meetings of the page
-    links_og <- url %>% html_nodes('#main-content .first a') %>% html_attr("href")
-    links <- unlist(str_extract_all(links_og, "^/indhold.*")) 
+    #Getting the links for the meetings of the page
+    links <- url %>% html_nodes('#main-content .first a') %>% html_attr("href")
+    links <- unlist(str_extract_all(links, "^/indhold.*")) #Making sure that only links to meetings get into the list of links
     links <- paste0("https://www.kk.dk", links)
     
     
@@ -48,12 +48,25 @@ while (x <= 320) { #320 = magic number
       
         print(paste0("Working on link ", y, "/", length(links)))
         
-        ref_url <- read_html(links[y])
         
-        #pull out the agenda items from meeting b
+        tryCatch({
+            error_link <- "a"
+            #Picking the y number meeting to scrap
+            ref_url <- read_html(links[y])
+        }, error=function(e){(Sys.sleep(2))
+            error_link <- "b"
+            print(paste("Error with link", y))})
+        
+        if(!error_link == "a") {
+            ref_url <- read_html(links[y])
+            print("Problem solved")
+        }
+        
+        
+        #pull out the agenda items from meeting 
         items <- ref_url %>% html_nodes("td > a") %>% html_text(trim = T)
         
-        #pull out agenda item numbers for meeting b
+        #pull out agenda item numbers for meeting 
         nos <- ref_url %>% html_nodes(".agenda-item-number") %>% html_text(trim = T)
         
         #pull out links to each referat item
@@ -66,7 +79,6 @@ while (x <= 320) { #320 = magic number
             if(lf == 1 ){
                 date <- ref_url %>% html_nodes(".agenda-overview td") %>% html_text(trim = T)
                 date <- str_extract(date, "[[:alnum:]]*[[:punct:]][[:alnum:]]*[[:punct:]][[:alnum:]]*")
-                date <- as.Date(date, "%d-%m-%Y")
                 
                 if(dc == 0){
                 dates <- date    
@@ -101,7 +113,7 @@ while (x <= 320) { #320 = magic number
             }
           refs <- unlist(refs)  
         
-         #pull out date of meeting b
+         
        
         
         #assemble dataframe
