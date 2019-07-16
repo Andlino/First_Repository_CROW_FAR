@@ -3,6 +3,7 @@
 ## July 2019
 ## Scrape Copengange city council referater
 
+# rm(list = ls())
 # setwd("C:/Users/musse/Aarhus universitet/Tim Dennis Runck - CROW_FAR/First_Repository_CROW_FAR/data_collection_code")
 
 library(rvest)
@@ -20,7 +21,8 @@ if(!dir.exists("../data_archive/copenhagen_archive")) dir.create("../data_archiv
 #set base url for looping -- this is more of a 'start' page for this task
 start_url <- "https://www.kk.dk/dagsordener-og-referater?field_committee_type_tid%5B%5D=13957&field_committee_type_tid%5B%5D=13960&field_committee_type_tid%5B%5D=13959&field_committee_type_tid%5B%5D=13958&title=&field_date_single_value%5Bvalue%5D%5Bdate%5D=01.01.2007&field_date_single_value_1%5Bvalue%5D%5Bdate%5D=01.01.2018&page="
 
-dfs <- list()
+problem_list <- list() #list to registrer errors
+dfs <- list() #list for dataframes for each meeting
 dc <- 0 #creating a date count for later use
 
 x <- 0
@@ -48,20 +50,28 @@ while (x <= 320) { #320 = magic number
       
         print(paste0("Working on link ", y, "/", length(links)))
         
-        
-        tryCatch({
-            error_link <- "a"
+        ref_url <- "error_test"
+        count <- 1
+        for(count in 1:5) {tryCatch({ #Catching possibles errors
+            
             #Picking the y number meeting to scrap
             ref_url <- read_html(links[y])
-        }, error=function(e){(Sys.sleep(2))
-            error_link <- "b"
-            print(paste("Error with link", y))})
-        
-        if(!error_link == "a") {
-            ref_url <- read_html(links[y])
-            print("Problem solved")
-        }
-        
+        }, error=function(e){Sys.sleep(2)
+                    })
+
+            if(ref_url[1] != "error_test"){
+                break}
+            
+            if(count == 5){
+            problem_list[[length(problem_list) + 1]] <- paste("Page", x, "Link", y)
+            print(paste("Error with link", y))
+            break
+            }
+            }
+        if(count == 5){
+            y <- y + 1
+            next}
+
         
         #pull out the agenda items from meeting 
         items <- ref_url %>% html_nodes("td > a") %>% html_text(trim = T)
@@ -95,7 +105,13 @@ while (x <= 320) { #320 = magic number
                 load(file.name)
             } else {
             
-            agenda_link <- read_html(ref_links[lf])
+                tryCatch({ #Catching possibles errors
+                    #Reading and downloading the individual items fromn their individual webpages
+                    agenda_link <- read_html(ref_links[lf])
+                }, error=function(e){print(paste("Problem with", lf))
+                    problem_list[[length(problem_list) + 1]] <- paste("Page", x, "Link", y, "Item", lf)
+                    })
+                
             agenda_link <- htmlParse(agenda_link)
             agenda <- saveXML(agenda_link)
             save(agenda, file = file.name)
