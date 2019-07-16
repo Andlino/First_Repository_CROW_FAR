@@ -91,14 +91,15 @@ while (x <= 320) { #320 = magic number
                 date <- str_extract(date, "[[:alnum:]]*[[:punct:]][[:alnum:]]*[[:punct:]][[:alnum:]]*")
                 
                 if(dc == 0){
-                dates <- date    
+                dates <- date 
+                dc <- dc + 1
                 }else{
                 dates <- str_c(c(dates, date))
                 date <- make.unique(dates, "-")}
-            dc <- dc + 1
+            
                 }
             
-            file.name <- paste0("../data_archive/copenhagen_archive/", date[dc], " item ", nos[lf], ".RData")
+            file.name <- paste0("../data_archive/copenhagen_archive/", date[length(date)], " item ", nos[lf], ".RData")
             
             if (file.exists(file.name)){
                 #if archived file exists, load it instead of downloading again
