@@ -82,22 +82,26 @@ while (x <= 320) { #320 = magic number
         #pull out links to each referat item
         ref_links <- ref_url %>% html_nodes("td > a") %>% html_attr("href")
         
+        #Pull the date for the meeting, this is also the name for the archive files, which is why their is a loop to make sure meetings on the same day gets different names
+        date <- ref_url %>% html_nodes(".agenda-overview td") %>% html_text(trim = T)
+        date <- str_extract(date, "[[:alnum:]]*[[:punct:]][[:alnum:]]*[[:punct:]][[:alnum:]]*")
+        if(dc == 0){
+            dates <- date 
+            dc <- dc + 1
+        }else{
+            line <- grep(date, dates)
+            linenr <- 1
+            date2 <- date
+            while(length(line) != 0){
+                date <- paste0(date2, "-", linenr) 
+                linenr <- linenr + 1
+                line <- grep(date, dates)
+            }
+            dates <- str_c(c(dates, date))}
+        
         #Pull out each referat item and put it into a list, to then unlist the list
         refs <- list()
         for(lf in 1:length(nos)){
-            
-            if(lf == 1 ){
-                date <- ref_url %>% html_nodes(".agenda-overview td") %>% html_text(trim = T)
-                date <- str_extract(date, "[[:alnum:]]*[[:punct:]][[:alnum:]]*[[:punct:]][[:alnum:]]*")
-                
-                if(dc == 0){
-                dates <- date 
-                dc <- dc + 1
-                }else{
-                dates <- str_c(c(dates, date))
-                date <- make.unique(dates, "-")}
-            
-                }
             
             file.name <- paste0("../data_archive/copenhagen_archive/", date[length(date)], " item ", nos[lf], ".RData")
             
