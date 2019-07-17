@@ -22,7 +22,7 @@ if(!dir.exists("../data_archive/copenhagen_archive")) dir.create("../data_archiv
 start_url <- "https://www.kk.dk/dagsordener-og-referater?field_committee_type_tid%5B%5D=13957&field_committee_type_tid%5B%5D=13960&field_committee_type_tid%5B%5D=13959&field_committee_type_tid%5B%5D=13958&title=&field_date_single_value%5Bvalue%5D%5Bdate%5D=01.01.2007&field_date_single_value_1%5Bvalue%5D%5Bdate%5D=01.01.2018&page="
 
 dfs <- list() #list for dataframes for each meeting
-dc <- 0 #creating a date count to distenguish the first scrape
+dates <- "19" #creating a date count to distenguish the first scrape
 
 x <- 0
 #Starting main loop over the different pages
@@ -37,11 +37,9 @@ while (x <= 320) { #320 = magic number
     
     #Getting the links for the meetings of the page
     links <- url %>% html_nodes('#main-content .first a') %>% html_attr("href")
-    links <- unlist(str_extract_all(links, "^/indhold.*")) #Making sure that only links to meetings get into the list of links
+    links2 <- grep("^/indhold", links)
+    links <- links[links2] #Making sure that only links to meetings get into the list of links
     links <- paste0("https://www.kk.dk", links)
-    
-    
-    
     
     
     #Starting secondary loop over the different meetings
@@ -64,12 +62,7 @@ while (x <= 320) { #320 = magic number
         #Pull the date for the meeting, this is also the name for the archive files, which is why their is a loop to make sure meetings on the same day gets different names
         date <- ref_url %>% html_nodes(".agenda-overview td") %>% html_text(trim = T)
         date <- str_extract(date, "[[:alnum:]]*[[:punct:]][[:alnum:]]*[[:punct:]][[:alnum:]]*")
-        if(dc == 0){
-            dates <- date 
-            dc <- dc + 1
-        }else{
-            
-            dates <- str_c(c(dates, date))}
+        dates <- str_c(c(dates, date))
         date <- make.unique(dates, "-")[length(dates)]
         
         
