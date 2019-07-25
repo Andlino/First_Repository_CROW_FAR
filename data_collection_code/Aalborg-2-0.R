@@ -111,3 +111,15 @@ for(i in 1:length(links)) {
 
 df <- as.data.frame(rbindlist(dfs))
 save(df, file = './data_archive/AalborgPdfLinks.RData')
+
+pdfurl <- "https://www.aalborg.dk/usercontrols/AalborgKommune/Referater/Pdf.aspx?pdfnavn=2017-11-13%2016.00.pdf&type=moede&pdfid=14322"
+download.file(pdfurl, 'introductionToR.pdf', mode="wb")
+
+for (i in 1:length(df$linkspdf)) {
+    pdfurl <- df$linkspdf[[i]]
+    title <- df$title[[i]]
+    title <- paste0(title, ".pdf")
+    
+    download.file(pdfurl, title, mode="wb")
+
+}
