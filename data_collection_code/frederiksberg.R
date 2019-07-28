@@ -1,7 +1,11 @@
 ## frederiksberg.R
 ## Matt W. Loftis
 ## July 2019
-## Scrape Aarhus city council referater
+## Scrape Frederiksberg city council referater
+
+# rm(list = ls())
+# setwd("C:/Users/musse/Aarhus universitet/Tim Dennis Runck - CROW_FAR/First_Repository_CROW_FAR/data_collection_code")
+
 
 library(rvest)
 library(RCurl)
@@ -30,7 +34,7 @@ years.list <- main.form[[2]]$fields$year$options
 years.list <- years.list[-1] #drop first option since it's garbage
 years.list <- years.list[years.list < 2018]
 
-dates <- "19" #creating a date count to distenguish the first scrape
+dates <- "Not a date" #creating a date count to distenguish the first scrape
 
 #empty list for storing data frames
 dfs <- list()
@@ -42,6 +46,7 @@ dfs <- list()
 for(j in 1:length(years.list)) { #LOOP OVER YEARS
   print(paste("Working on year", years.list[j])) #report progress in console
   
+
   #set main form to year j
   form.set.year <- set_values(main.form[[2]], year = years.list[j])
   
@@ -64,11 +69,14 @@ for(j in 1:length(years.list)) { #LOOP OVER YEARS
   com_count <- com_count[-1]
   
     for(mc in 1:length(months_count)){
-    
+
   month <- months_count[mc]  
+
   
       for(cc in 1:length(com_count)){
         
+          print(paste0("Working on year ", years.list[j], " - month ", month, " - committee ", cc, "/", length(com_count))) #report progress in console
+          
         form.set.mtg <- set_values(year.form[[2]], committee = com_count[cc], month = month)
         
         #again, fix the 'type' associated with the form submission button
@@ -86,10 +94,47 @@ for(j in 1:length(years.list)) { #LOOP OVER YEARS
             
             for(lc in 1:length(links)){
               
-              html_link <- read_html(links[lc])
                 
-              header_date <- html_link %>% html_nodes(".field--type-string") %>% html_text(trim = T)
-              header_date <- str_extract(header_date, paste("den [[:digit:]]*[[:punct:]] [[:alnum:]]*", years.list[j]))
+                
+                ok <- FALSE
+                problem <- FALSE
+                count <- 1
+                
+                #Reading the html for the first meeting
+                while (ok == FALSE) {
+                    html_link <- tryCatch({                  
+                        read_html(links[lc])
+                    },
+                    error = function(e) {problm <- TRUE
+                    Sys.sleep(2)
+                    e
+                    }
+                    )
+                    if ("error" %in% class(html_link)) {
+                        print(paste("Problem with link", lc))
+                        count <- count + 1
+                        
+                    } else {
+                        if(problem == TRUE ){print(paste("Problem with", lc, "fixed"))}
+                        ok <- TRUE
+                    }
+                    if(count == 10){
+                        break
+                    }
+                    
+                }
+                if(count == 10) {count <- 1
+                lc <- lc +1
+                next}
+                
+                
+                
+              #pull out the agenda items from meeting i in year j
+              items <- html_link %>% html_nodes(".open-meeting") %>% html_text(trim = T)
+              if(length(items) >= 1){
+              
+              header_date_1 <- html_link %>% html_nodes(".field--type-string") %>% html_text(trim = T)
+              header_date <- str_extract(header_date_1, paste("den [[:digit:]]*[[:punct:]] [[:alnum:]]*", years.list[j]))
               header_date <- sub("den ", "", header_date)
               header_date <- sub("[[:punct:]]", "", header_date)
               header_date <- sub(months[as.numeric(month)], month, header_date)
@@ -99,9 +144,9 @@ for(j in 1:length(years.list)) { #LOOP OVER YEARS
               dates <- str_c(c(dates, header_date))
               date <- make.unique(dates, "-")[length(dates)]
               
-              file.name <- paste0("../data_archive/copenhagen_frederiksberg/", date, ".RData")
+              file.name <- paste0("../data_archive/frederiksberg_archive/", date, ".RData")
               
-              }
+              
             
             if (file.exists(file.name)){
                 #if archived file exists, load it instead of downloading again
@@ -109,14 +154,12 @@ for(j in 1:length(years.list)) { #LOOP OVER YEARS
             } else {
             
                 
-                html_link <- htmlParse(html_link)
+                meeting <- htmlParse(html_link)
                 #Saving each individual item
-                meeting <- saveXML(html_link)
-                save(agenda, file = file.name)
+                meeting <- saveXML(meeting)
+                save(meeting, file = file.name)
             }
              
-                #pull out the agenda items from meeting i in year j
-                items <- html_link %>% html_nodes(".open-meeting") %>% html_text(trim = T)
                 
                 #pull out agenda item numbers for meeting i in year j
                 nos <- 1:length(items)
@@ -128,14 +171,34 @@ for(j in 1:length(years.list)) { #LOOP OVER YEARS
                                    path = "//*[contains(concat( ' ', @class, ' ' ), concat( ' ', 'container', ' ' ))] | //*[contains(concat( ' ', @class, ' ' ), concat( ' ', 'active', ' ' ))]", 
                                    xmlValue)
                 
+                ref <- str_squish(ref[3])
+                ref <- sub(paste(header_date_1, " Fold alle ud "), "", ref)
+                ref <- sub("Del Facebook Linkedin Twitter Udskriv Abonnér", "", ref)
+                
+                refs <- list()
+                for(rc in 1:length(items)){
+                    if(rc < length(items)){
+                        
+                        if(grepl("[(]", items[rc]) == T & grepl("[)]", items[rc]) == F){items[rc] <- sub("[(].*", "", items[rc])}
+                        if(grepl("[(]", items[rc + 1]) == T & grepl("[)]", items[rc + 1]) == F){items[rc + 1] <- sub("[(].*", "", items[rc + 1])}
+                        
+                        temp_ref    <- str_extract(ref, paste("(?=", items[rc],"?).*", items[rc + 1]))
+                        temp_ref <- sub(items[rc + 1], "", temp_ref)
+                        refs[[rc]] <- temp_ref
+                        }else{
+                     refs[[rc]] <- str_extract(ref, paste("(?=", items[rc],"?).*"))}
+                }
+                refs <- unlist(refs)        
+                    
+                     
                 
                 #assemble dataframe
                 df <- data.frame(
-                    city = "Aarhus",
+                    city = "Frederiksberg",
                     date = date,
                     agenda_no = nos,
                     title = items,
-                    referat = ref,
+                    referat = refs,
                     stringsAsFactors = F
                 )
                 
@@ -143,6 +206,12 @@ for(j in 1:length(years.list)) { #LOOP OVER YEARS
                 dfs[[length(dfs) + 1]] <- df    
                 
                 
-          }
-          
           }}
+          
+      }}}}
+
+#put together all dataframes into one big one
+out <- as.data.frame(rbindlist(dfs))
+
+#save final data for later
+save(out, file = '../data_archive/frederiksberg_12-17.RData')
