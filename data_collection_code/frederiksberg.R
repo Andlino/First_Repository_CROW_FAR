@@ -143,6 +143,7 @@ for(j in 1:length(years.list)) { #LOOP OVER YEARS
             
               dates <- str_c(c(dates, header_date))
               date <- make.unique(dates, "-")[length(dates)]
+              ref_date <- dates[length(dates)]
               
               file.name <- paste0("../data_archive/frederiksberg_archive/", date, ".RData")
               
@@ -195,7 +196,7 @@ for(j in 1:length(years.list)) { #LOOP OVER YEARS
                 #assemble dataframe
                 df <- data.frame(
                     city = "Frederiksberg",
-                    date = date,
+                    date = ref_date,
                     agenda_no = nos,
                     title = items,
                     referat = refs,
