@@ -139,6 +139,7 @@ for(j in 1:length(years.list)) { #LOOP OVER YEARS
               header_date <- sub("[[:punct:]]", "", header_date)
               header_date <- sub(months[as.numeric(month)], month, header_date)
               if(as.numeric(month) < 10){header_date <- sub(" [[:digit:]] ", paste0(" 0", month, " "), header_date)}
+              if(sum(as.numeric(str_extract(header_date, "^[[:digit:]]*"))) < 10){header_date <- paste0("0", header_date)}
               header_date <- gsub(" ", "-", header_date)
             
               dates <- str_c(c(dates, header_date))
