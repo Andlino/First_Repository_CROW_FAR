@@ -1,5 +1,5 @@
 ## frederiksberg.R
-## Matt W. Loftis
+## Massimo G Losinno
 ## July 2019
 ## Scrape Frederiksberg city council referater
 
