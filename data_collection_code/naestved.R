@@ -29,7 +29,6 @@ dates <- "Not a date" #creating a date count to distenguish the first scrape
 
 year <- c("17", "16", "15", "14")
 
-months <- c("januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december")
 
 #Creating the url to get links for each of the meetings
 first_url <- read_html(first_url)
