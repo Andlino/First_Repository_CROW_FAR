@@ -48,8 +48,8 @@ for (x in 1:length(master_links)) {
 for(yc in 1:length(years)){
   
   print(paste("Working on year", yc))
-  
-  
+
+    
 #Getting dates and links for meetings in 2018
 url <- paste0(master_links[x], paste0("&year=20", years[yc]))
 url <- getURL(url) 
@@ -59,6 +59,7 @@ links <- url %>% html_nodes('.pHead .pHeadBackground') %>% html_attr("href")
 meet_dates <- url %>% html_nodes('.pHead .pHeadBackground') %>% html_text(trim = T)
 meet_dates <- str_extract(meet_dates,"[[:digit:]]*[[:punct:]][[:digit:]]*[[:punct:]][[:digit:]]*")
 
+if(length(links) >= 1){
 for (mc in 1:length(links)) {
   
   dates <- str_c(c(dates, meet_dates[mc]))
@@ -71,7 +72,36 @@ for (mc in 1:length(links)) {
   
   junior_url <- links[mc]
   
-  item_url <- getURL(junior_url) 
+  ok <- FALSE
+  problem <- FALSE
+  count <- 1
+  
+  #Reading the html for the first meeting
+  while (ok == FALSE) {
+      item_url <- tryCatch({                  
+          getURL(junior_url)
+      },
+      error = function(e) {problm <- TRUE
+      Sys.sleep(2)
+      e
+      }
+      )
+      if ("error" %in% class(item_url)) {
+          print(paste("Problem with link", mc))
+          count <- count + 1
+          
+      } else {
+          if(problem == TRUE ){print(paste("Problem with", lf, "fixed"))}
+          ok <- TRUE
+      }
+      if(count == 10){
+          break
+      }
+      
+  }
+  
+  
+  
   
   #Check if the file already exists for the meeting
   if (file.exists(file.name)){
@@ -83,7 +113,36 @@ for (mc in 1:length(links)) {
                        str_extract(junior_url, "[[:digit:]]*$"))   
   
   #Download the full html with the transcription in it     
-  meeting <- getURL(junior_url2) 
+  
+  ok <- FALSE
+  problem <- FALSE
+  count <- 1
+  
+  #Reading the html for the first meeting
+  while (ok == FALSE) {
+      meeting <- tryCatch({                  
+          getURL(junior_url2)
+      },
+      error = function(e) {problm <- TRUE
+      Sys.sleep(2)
+      e
+      }
+      )
+      if ("error" %in% class(meeting)) {
+          print(paste("Problem with link", y))
+          count <- count + 1
+          
+      } else {
+          if(problem == TRUE ){print(paste("Problem with", lf, "fixed"))}
+          ok <- TRUE
+      }
+      if(count == 10){
+          break
+      }
+      
+  }
+  
+  
   save(meeting, file = file.name)
   }
 
@@ -125,7 +184,7 @@ for (mc in 1:length(links)) {
     
     #put that dataframe into our list of dataframes
     dfs[[length(dfs) + 1]] <- df}
-  
+  }
 }#End of links loop
 }#End of year loop
 }#End of committee loop
