@@ -4,6 +4,10 @@
 ## August 2019
 ## Scrape Gentofte city council referater
 
+
+#################### ONLY SCRAPES - DOES NOT PARSE #######################################
+
+
 # rm(list = ls())
 # setwd("C:/Users/musse/Aarhus universitet/Tim Dennis Runck - CROW_FAR/First_Repository_CROW_FAR/data_collection_code")
 
@@ -43,7 +47,7 @@ type <- gsub("[[:punct:]]", "", str_extract(type, "[[:punct:]][[:alpha:]]*[[:pun
 dates <- first_url %>% html_nodes('.date') %>% html_text(trim = T) 
   td <- first_url %>% html_nodes('td') %>% html_text(trim = T) 
   td <- td[seq(2,length(td),2)]
- dates <- [grep("Referat", td)]
+ dates <- dates[grep("Referat", td)]
  dates2 <- make.unique(dates, "-")
   
 for(mc in 1:length(meetings)){
@@ -64,12 +68,11 @@ for(mc in 1:length(meetings)){
       agenda <- pdf_text(file.name)
       agenda <- paste(agenda,collapse="")
       ref <- str_squish(agenda)
-    }
-    }else{  
-    
-  
-  
-  }else{if(type[mc] == "DOC"){
+      str_extract_all(agenda, "[[:digit:]]*[[.]].*\r")    
+      
+      
+      }
+    }else{if(type[mc] == "DOC"){
     
     file.name <- paste0("../data_archive/gentofte_archive/", dates2[mc], ".DOC")  
     
@@ -112,23 +115,7 @@ for(mc in 1:length(meetings)){
     
     
     
-    refs <- list()
-    for(rc in 1:length(items)){
-      if(rc < length(items)){
-        
-        if(grepl("[(]", items[rc]) == T & grepl("[)]", items[rc]) == F){items[rc] <- sub("[(].*", "", items[rc])}
-        if(grepl("[(]", items[rc + 1]) == T & grepl("[)]", items[rc + 1]) == F){items[rc + 1] <- sub("[(].*", "", items[rc + 1])}
-        
-        temp_ref    <- str_extract(ref, paste("(?=", items[rc],"?).*", items[rc + 1]))
-        temp_ref <- sub(items[rc + 1], "", temp_ref)
-        refs[[rc]] <- temp_ref
-      }else{
-        refs[[rc]] <- str_extract(ref, paste("(?=", items[rc],"?).*"))}
-    }
-    refs <- unlist(refs)
-    
-    
-  
+
 }}
 }
 
